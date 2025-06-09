@@ -1,6 +1,5 @@
 package analogwatch;
 
-import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -12,35 +11,38 @@ import javax.swing.JPanel;
 
 import client.IOperatingSystemSettings;
 
-class Background extends JPanel {
+final class Background extends JPanel {
 	private static final long serialVersionUID = 1L;
-	BufferedImage myBufferedImage;
+	private BufferedImage originalImage;
+	private BufferedImage scaledImage;
 
 	Background(IOperatingSystemSettings operatingSystemSettings) {
-
-		setLayout(new BorderLayout());
 		try {
-			myBufferedImage = ImageIO.read(new File(operatingSystemSettings.getPathToImageForBackground()));
+			originalImage = ImageIO.read(new File(operatingSystemSettings.getPathToImageForBackground()));
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException("Failed to load background image from path: "
+					+ operatingSystemSettings.getPathToImageForBackground(), e);
 		}
 	}
 
-	public void paintComponent(Graphics g) {
+	@Override
+	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		try {
-			g.drawImage(resizeImage(myBufferedImage, getWidth(), getHeight()), 0, 0, this);
-		} catch (IOException e) {
-			e.printStackTrace();
+
+		if (scaledImage == null && originalImage != null) {
+			scaledImage = resizeImage(originalImage, getWidth(), getHeight());
+		}
+
+		if (scaledImage != null) {
+			g.drawImage(scaledImage, 0, 0, this);
 		}
 	}
 
-	private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight)
-			throws IOException {
-		BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, 1);
-		Graphics2D graphics2D = resizedImage.createGraphics();
-		graphics2D.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
-		graphics2D.dispose();
+	private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+		BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = resizedImage.createGraphics();
+		g2d.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+		g2d.dispose();
 		return resizedImage;
 	}
 }

@@ -83,37 +83,40 @@ public class AnalogWatchFrame extends JFrame implements Runnable {
 	}
 
 	public void run() {
-		while (hasEnded.booleanValue()) {
-			try {
-				Thread.sleep(100L);
-			} catch (InterruptedException e) {
+		while (true) {
 
-				e.printStackTrace();
+			while (hasEnded) {
+				try {
+					Thread.sleep(100L);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
-		}
 
-		showFrame();
-		myCurrentStartTimeInMillies = System.currentTimeMillis();
+			showFrame();
+			myCurrentStartTimeInMillies = System.currentTimeMillis();
 
-		try {
-			Boolean doExecute = Boolean.TRUE;
+			boolean doExecute = true;
 
-			while (doExecute.booleanValue()) {
+			while (doExecute) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					break; // Exit inner loop on interrupt
+				}
 
-				Thread.sleep(100);
 				repaint();
 
 				if (System.currentTimeMillis() - myCurrentStartTimeInMillies >= mySleepingTime) {
-					doExecute = Boolean.FALSE;
+					doExecute = false;
 				}
 			}
 
 			hideFrame();
 
-			hasEnded = Boolean.TRUE;
-
-			run();
-		} catch (InterruptedException interruptedException) {
+			hasEnded = true;
 		}
 	}
+
 }

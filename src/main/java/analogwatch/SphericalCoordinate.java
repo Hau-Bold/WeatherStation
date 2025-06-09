@@ -1,19 +1,19 @@
 package analogwatch;
 
-class SphericalCoordinate {
-	private double myX;
-	private double myY;
+public final class SphericalCoordinate {
+	private final double x;
+	private final double y;
 
-	SphericalCoordinate(double x, double y) {
-		myX = x;
-		myY = y;
+	public SphericalCoordinate(double x, double y) {
+		this.x = x;
+		this.y = y;
 	}
 
-	double getXEntry() {
-		return myX;
+	public double getX() {
+		return x;
 	}
 
-	double getYEntry() {
-		return myY;
+	public double getY() {
+		return y;
 	}
 }

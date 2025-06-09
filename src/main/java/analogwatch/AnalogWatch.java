@@ -6,8 +6,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.JPanel;
 
@@ -15,16 +15,28 @@ import digitalweatherstation.Time;
 
 public class AnalogWatch extends JPanel {
 
-	private int myOuterLengthOfSecondHand = 145;
+	private static final int NUMBER_RADIUS = 120;
+	private static final int OUTER_RADIUS = 145;
+	private static final int MINUTE_MARK_START_RADIUS = 140;
+	private static final int SHORT_HOUR_MARK_LENGTH = 138;
+	private static final int LONG_HOUR_MARK_LENGTH = 130;
+	private static final Color HOUR_LINE_DAY_COLOR = Color.DARK_GRAY;
+	private static final Color HOUR_LINE_NIGHT_COLOR = Color.LIGHT_GRAY;
+	private static final Color INFO_TEXT_COLOR = new Color(79, 115, 142);
+	private static final int HOUR_HAND_LENGTH = 105;
+	private static final int MINUTE_HAND_LENGTH = 125;
+
+	private static final int SECOND_HAND_LENGTH = 145;
+	private static final Color SECOND_HAND_COLOR = new Color(0xF86A6A);
 
 	private static final long serialVersionUID = 1L;
 
-	private String myTimeZone;
+	private String timeZone;
 
 	private SimpleDateFormat mySimpleDateFormat = new SimpleDateFormat("dd-MM");
 
 	public AnalogWatch(String timeZone) {
-		myTimeZone = timeZone;
+		this.timeZone = timeZone;
 	}
 
 	public void paint(Graphics g) {
@@ -32,7 +44,7 @@ public class AnalogWatch extends JPanel {
 
 		Graphics2D graphics2d = (Graphics2D) g;
 
-		Time currentTime = Utils.getCurrentTimeAt(this.myTimeZone);
+		Time currentTime = Utils.getCurrentTimeAt(timeZone);
 
 		var xCenter = getWidth() / 2;
 		var yCenter = getHeight() / 2;
@@ -50,17 +62,17 @@ public class AnalogWatch extends JPanel {
 	}
 
 	private void drawAnalogWatch(Graphics2D graphics2d, int xCenter, int yCenter, Time currentTime) {
-		graphics2d.setColor(currentTime.isAfternoon().booleanValue() ? Color.BLACK : Color.decode("#FFFFFF"));
+		graphics2d.setColor(currentTime.isAfternoon() ? Color.BLACK : Color.WHITE);
 		graphics2d.setFont(new Font("TimesRoman", 1, 20));
 		graphics2d.fillOval(xCenter - 150, yCenter - 150, 300, 300);
-		graphics2d.setColor(currentTime.isAfternoon().booleanValue() ? Color.decode("#FFFFFF") : Color.BLACK);
+		graphics2d.setColor(currentTime.isAfternoon() ? Color.WHITE : Color.BLACK);
 
 		drawDate(graphics2d, xCenter, yCenter, currentTime.getCalendar().getTime());
-		drawNameOfCity(graphics2d, xCenter, yCenter);
+		drawCityName(graphics2d, xCenter, yCenter);
 		drawTime(graphics2d, xCenter, yCenter, currentTime);
 
-		ArrayList<SphericalCoordinate> sphericalCoordinatesForHours = Utils.getCoordinatesOfHours();
-		ArrayList<SphericalCoordinate> sphericalCoordinatesForMinutes = Utils.getCoordinatesOfMinutes();
+		List<SphericalCoordinate> sphericalCoordinatesForHours = Utils.getCoordinatesOfHours();
+		List<SphericalCoordinate> sphericalCoordinatesForMinutes = Utils.getCoordinatesOfMinutes();
 
 		drawNumbers(graphics2d, xCenter, yCenter, sphericalCoordinatesForHours, currentTime.isAfternoon());
 
@@ -69,8 +81,8 @@ public class AnalogWatch extends JPanel {
 	}
 
 	private void drawNumbers(Graphics2D graphics2d, int xCenter, int yCenter,
-			ArrayList<SphericalCoordinate> sphericalCoordinatesForHours, Boolean isAfternoon) {
-		graphics2d.setColor(isAfternoon.booleanValue() ? Color.decode("#FFFFFF") : Color.BLACK);
+			List<SphericalCoordinate> sphericalCoordinatesForHours, Boolean isAfternoon) {
+		graphics2d.setColor(isAfternoon ? Color.WHITE : Color.BLACK);
 
 		for (int hour = 0; hour < sphericalCoordinatesForHours.size(); hour++) {
 			SphericalCoordinate sphericalCoordinatesForHour = sphericalCoordinatesForHours.get(hour);
@@ -78,8 +90,8 @@ public class AnalogWatch extends JPanel {
 			var charWidth = graphics2d.getFontMetrics().stringWidth(String.valueOf(hour));
 			var charHeight = graphics2d.getFontMetrics().getHeight();
 
-			var xEnd = (int) (sphericalCoordinatesForHour.getXEntry() * 120.0D + xCenter);
-			var yEnd = (int) (sphericalCoordinatesForHour.getYEntry() * 120.0D + yCenter);
+			var xEnd = (int) (sphericalCoordinatesForHour.getX() * NUMBER_RADIUS + xCenter);
+			var yEnd = (int) (sphericalCoordinatesForHour.getY() * NUMBER_RADIUS + yCenter);
 
 			if (hour == 6) {
 				yEnd -= charHeight / 3;
@@ -88,116 +100,97 @@ public class AnalogWatch extends JPanel {
 			}
 
 			graphics2d.translate(xEnd, yEnd);
-
 			graphics2d.drawString(String.valueOf(hour), -charWidth / 2, charHeight / 3);
-
 			graphics2d.translate(-xEnd, -yEnd);
 		}
 	}
 
-	private void drawMinuteLines(Graphics2D graphics2d, int xCenter, int yCenter,
-			ArrayList<SphericalCoordinate> sphericalCoordinatesForMinutes, Boolean isAfternoon) {
-		graphics2d.setColor(isAfternoon.booleanValue() ? Color.LIGHT_GRAY : Color.DARK_GRAY);
-		graphics2d.setStroke(new BasicStroke(1.0F));
+	private void drawMinuteLines(Graphics2D g2d, int xCenter, int yCenter, List<SphericalCoordinate> minuteCoordinates,
+			Boolean isAfternoon) {
 
-		for (SphericalCoordinate sphericalCoordinate : sphericalCoordinatesForMinutes) {
+		g2d.setColor(isAfternoon ? Color.LIGHT_GRAY : Color.DARK_GRAY);
+		g2d.setStroke(new BasicStroke(1.0f));
 
-			var xEntryStart = (int) (sphericalCoordinate.getXEntry() * 140.0D + xCenter);
-			var yEntryStart = (int) (sphericalCoordinate.getYEntry() * 140.0D + yCenter);
+		for (SphericalCoordinate coord : minuteCoordinates) {
+			int xStart = (int) (coord.getX() * MINUTE_MARK_START_RADIUS + xCenter);
+			int yStart = (int) (coord.getY() * MINUTE_MARK_START_RADIUS + yCenter);
 
-			var xEntryEnd = (int) (sphericalCoordinate.getXEntry() * 145.0D + xCenter);
-			var yEntryEnd = (int) (sphericalCoordinate.getYEntry() * 145.0D + yCenter);
+			int xEnd = (int) (coord.getX() * SECOND_HAND_LENGTH + xCenter);
+			int yEnd = (int) (coord.getY() * SECOND_HAND_LENGTH + yCenter);
 
-			graphics2d.drawLine(xEntryStart, yEntryStart, xEntryEnd, yEntryEnd);
+			g2d.drawLine(xStart, yStart, xEnd, yEnd);
 		}
 	}
 
-	private void drawHourLines(Graphics2D graphics2d, int xCenter, int yCenter,
-			ArrayList<SphericalCoordinate> sphericalCoordinatesForHours, Boolean isAfternoon) {
-		graphics2d.setColor(isAfternoon.booleanValue() ? Color.LIGHT_GRAY : Color.DARK_GRAY);
-		graphics2d.setStroke(new BasicStroke(2.0F));
+	private void drawHourLines(Graphics2D g2d, int xCenter, int yCenter, List<SphericalCoordinate> hourCoordinates,
+			Boolean isAfternoon) {
 
-		for (int hour = 0; hour < sphericalCoordinatesForHours.size(); hour++) {
+		g2d.setColor(isAfternoon ? HOUR_LINE_NIGHT_COLOR : HOUR_LINE_DAY_COLOR);
+		g2d.setStroke(new BasicStroke(2.0f));
 
-			var sphericalCoordinate = sphericalCoordinatesForHours.get(hour);
+		for (int i = 0; i < hourCoordinates.size(); i++) {
+			SphericalCoordinate coord = hourCoordinates.get(i);
 
-			var xEntryStart = 0;
-			var yEntryStart = 0;
+			int innerLength = (i % 3 == 0) ? LONG_HOUR_MARK_LENGTH : SHORT_HOUR_MARK_LENGTH;
 
-			if (hour % 3 == 0) {
-				xEntryStart = (int) (sphericalCoordinate.getXEntry() * 130.0D + xCenter);
-				yEntryStart = (int) (sphericalCoordinate.getYEntry() * 130.0D + yCenter);
-			} else {
-				xEntryStart = (int) (sphericalCoordinate.getXEntry() * 138.0D + xCenter);
-				yEntryStart = (int) (sphericalCoordinate.getYEntry() * 138.0D + yCenter);
-			}
+			int xStart = (int) (coord.getX() * innerLength + xCenter);
+			int yStart = (int) (coord.getY() * innerLength + yCenter);
 
-			var xEntryEnd = (int) (sphericalCoordinate.getXEntry() * 145.0D + xCenter);
-			var yEntryEnd = (int) (sphericalCoordinate.getYEntry() * 145.0D + yCenter);
+			int xEnd = (int) (coord.getX() * OUTER_RADIUS + xCenter);
+			int yEnd = (int) (coord.getY() * OUTER_RADIUS + yCenter);
 
-			graphics2d.drawLine(xEntryStart, yEntryStart, xEntryEnd, yEntryEnd);
+			g2d.drawLine(xStart, yStart, xEnd, yEnd);
 		}
 	}
 
-	private void drawSecondHand(Graphics2D graphics2d, int xCenter, int yCenter, int second) {
-		SphericalCoordinate sphericalCoordinate = Utils.getCoordinateOfSecondOnClock(second);
+	private void drawSecondHand(Graphics2D g2d, int xCenter, int yCenter, int second) {
+		SphericalCoordinate coordinate = Utils.getCoordinateOfSecondOnClock(second);
 
-		var xCoordinate = sphericalCoordinate.getXEntry();
-		var yCoordinate = sphericalCoordinate.getYEntry();
+		int xEnd = (int) (coordinate.getX() * SECOND_HAND_LENGTH + xCenter);
+		int yEnd = (int) (coordinate.getY() * SECOND_HAND_LENGTH + yCenter);
 
-		var xMinute = (int) (xCoordinate * this.myOuterLengthOfSecondHand + xCenter);
-		var yMinute = (int) (yCoordinate * this.myOuterLengthOfSecondHand + yCenter);
-
-		graphics2d.setColor(Color.decode("#F86A6A"));
-
-		graphics2d.drawLine((int) (xCenter - xCoordinate * 0.0D), (int) (yCenter - yCoordinate * 0.0D), xMinute,
-				yMinute);
+		g2d.setColor(SECOND_HAND_COLOR);
+		g2d.drawLine(xCenter, yCenter, xEnd, yEnd);
 	}
 
-	private void drawMinuteHand(Graphics2D graphics2d, int xCenter, int yCenter, Time currentTime) {
-		SphericalCoordinate sphericalCoordinate = Utils.getCoordinateOfMinuteOnClock(currentTime.getMinute(),
-				currentTime.getSecond());
+	private void drawMinuteHand(Graphics2D g2d, int xCenter, int yCenter, Time time) {
+		SphericalCoordinate coordinate = Utils.getCoordinateOfMinuteOnClock(time.getMinute(), time.getSecond());
 
-		var xMinute = (int) (sphericalCoordinate.getXEntry() * 125.0D + xCenter);
-		var yMinute = (int) (sphericalCoordinate.getYEntry() * 125.0D + yCenter);
+		int xEnd = (int) (coordinate.getX() * MINUTE_HAND_LENGTH + xCenter);
+		int yEnd = (int) (coordinate.getY() * MINUTE_HAND_LENGTH + yCenter);
 
-		graphics2d.setColor(currentTime.isAfternoon().booleanValue() ? Color.WHITE : Color.BLACK);
-		graphics2d.drawLine(xCenter, yCenter, xMinute, yMinute);
+		g2d.setColor(time.isAfternoon() ? Color.WHITE : Color.BLACK);
+		g2d.drawLine(xCenter, yCenter, xEnd, yEnd);
 	}
 
-	private void drawHourHand(Graphics2D graphics2d, int xCenter, int yCenter, Time currentTime) {
-		var hourCoordinate = Utils.getCoordinateOfHourOnClock(currentTime.getHour(), currentTime.getMinute());
+	private void drawHourHand(Graphics2D g2d, int xCenter, int yCenter, Time time) {
+		SphericalCoordinate coordinate = Utils.getCoordinateOfHourOnClock(time.getHour(), time.getMinute());
 
-		var xHour = (int) (hourCoordinate.getXEntry() * 105.0D + xCenter);
-		var yHour = (int) (hourCoordinate.getYEntry() * 105.0D + yCenter);
+		int xEnd = (int) (coordinate.getX() * HOUR_HAND_LENGTH + xCenter);
+		int yEnd = (int) (coordinate.getY() * HOUR_HAND_LENGTH + yCenter);
 
-		graphics2d.setColor(currentTime.isAfternoon().booleanValue() ? Color.WHITE : Color.BLACK);
-
-		graphics2d.drawLine(xCenter, yCenter, xHour, yHour);
+		g2d.setColor(time.isAfternoon() ? Color.WHITE : Color.BLACK);
+		g2d.drawLine(xCenter, yCenter, xEnd, yEnd);
 	}
 
-	private void drawDate(Graphics2D graphics2d, int xCenter, int yCenter, Date currentDate) {
-		graphics2d.setColor(new Color(79, 115, 142));
-
-		graphics2d.drawString(this.mySimpleDateFormat.format(currentDate), xCenter + 30, yCenter - 20);
-		graphics2d.drawString(getNameOfCityFromTimeZone(), xCenter - 20, yCenter + 30);
+	private void drawDate(Graphics2D g2d, int xCenter, int yCenter, Date date) {
+		g2d.setColor(INFO_TEXT_COLOR);
+		g2d.drawString(mySimpleDateFormat.format(date), xCenter + 30, yCenter - 20);
+		drawCityName(g2d, xCenter, yCenter);
 	}
 
-	private void drawTime(Graphics2D graphics2d, int xCenter, int yCenter, Time currentTime) {
-		graphics2d.setColor(currentTime.isAfternoon().booleanValue() ? Color.WHITE : Color.BLACK);
-
-		graphics2d.drawString(currentTime.toString(), xCenter - 20, yCenter + 60);
+	private void drawTime(Graphics2D g2d, int xCenter, int yCenter, Time currentTime) {
+		g2d.setColor(currentTime.isAfternoon() ? Color.WHITE : Color.BLACK);
+		g2d.drawString(currentTime.toString(), xCenter - 20, yCenter + 60);
 	}
 
-	private void drawNameOfCity(Graphics2D graphics2d, int xCenter, int yCenter) {
-		graphics2d.setColor(new Color(79, 115, 142));
-
-		graphics2d.drawString(getNameOfCityFromTimeZone(), xCenter - 20, yCenter + 30);
+	private void drawCityName(Graphics2D g2d, int xCenter, int yCenter) {
+		g2d.setColor(INFO_TEXT_COLOR);
+		g2d.drawString(getCityName(), xCenter - 20, yCenter + 30);
 	}
 
-	private String getNameOfCityFromTimeZone() {
-		String[] xyz = this.myTimeZone.split("/");
-
-		return xyz[xyz.length - 1];
+	private String getCityName() {
+		String[] parts = timeZone.split("/");
+		return parts.length > 0 ? parts[parts.length - 1] : timeZone;
 	}
 }

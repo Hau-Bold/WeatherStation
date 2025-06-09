@@ -6,14 +6,35 @@ import java.util.TimeZone;
 
 import digitalweatherstation.Time;
 
-public class Utils {
+public final class Utils {
 
-	public static Time getCurrentTimeAt(String timeZone) {
-		var calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
+	private static final double TWO_PI = 2 * Math.PI;
+	private static final double HALF_PI = Math.PI / 2;
 
-		var hour = calendar.get(11);
-		var minute = calendar.get(12);
-		var second = calendar.get(13);
+	private Utils() {
+		throw new UnsupportedOperationException("Utility class");
+	}
+
+	/**
+	 * Returns the current time (hour, minute, second) for a given time zone.
+	 *
+	 * @paramtimeZoneId the ID of the desired time zone (e.g., "Europe/Berlin",
+	 *                  "UTC")
+	 * @return a {@link Time} object containing the current time in the specified
+	 *         time zone
+	 * @throws IllegalArgumentException if the timeZoneId is null or empty
+	 */
+	public static Time getCurrentTimeAt(String timeZoneId) {
+		if (timeZoneId == null || timeZoneId.isEmpty()) {
+			throw new IllegalArgumentException("Time zone ID must not be null or empty");
+		}
+
+		TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
+		Calendar calendar = Calendar.getInstance(timeZone);
+
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		int minute = calendar.get(Calendar.MINUTE);
+		int second = calendar.get(Calendar.SECOND);
 
 		return new Time(hour, minute, second, calendar);
 	}
@@ -58,38 +79,44 @@ public class Utils {
 		return sphericalCoordinatesForHours;
 	}
 
-	private static SphericalCoordinate transformToSphericalCoordinate(int entryWithSectorsToConsider, int coutOfSectors,
+	private static SphericalCoordinate transformToSphericalCoordinate(int entryWithSectorsToConsider, int countOfSectors,
 			int entryWithoutSectorsToConsider) {
-		double offsetOfEntryWithSectorsToConsider = (entryWithSectorsToConsider * 2) * Math.PI / coutOfSectors;
 
-		double offsetOfEntryWithoutSectorsToConsider = entryWithoutSectorsToConsider / 60.0D * 6.283185307179586D
-				/ coutOfSectors;
+		double offsetOfEntryWithSectorsToConsider = (entryWithSectorsToConsider * TWO_PI) / countOfSectors;
+		double offsetOfEntryWithoutSectorsToConsider = (entryWithoutSectorsToConsider * TWO_PI) / (60 * countOfSectors);
 
 		double resultingOffset = offsetOfEntryWithSectorsToConsider + offsetOfEntryWithoutSectorsToConsider;
 
-		double xEntry = Math.cos(resultingOffset - 1.5707963267948966D);
-		double yEntry = Math.sin(resultingOffset - 1.5707963267948966D);
+		double xEntry = Math.cos(resultingOffset - HALF_PI);
+		double yEntry = Math.sin(resultingOffset - HALF_PI);
 
 		return new SphericalCoordinate(xEntry, yEntry);
 	}
 
+	/**
+	 * Converts a single clock unit (like second or minute) into a circular
+	 * coordinate.
+	 *
+	 * @paramentry The unit to convert (e.g. second or minute in range [0, 59])
+	 * @return SphericalCoordinate on the clock face
+	 */
 	private static SphericalCoordinate transformToSphericalCoordinate(int entry) {
-		double xEntry = Math.cos(entry * Math.PI / 30.0D - 1.5707963267948966D);
-		double yEntry = Math.sin(entry * Math.PI / 30.0D - 1.5707963267948966D);
+		double angle = (entry / 60.0) * TWO_PI;
+		double x = Math.cos(angle - HALF_PI);
+		double y = Math.sin(angle - HALF_PI);
 
-		return new SphericalCoordinate(xEntry, yEntry);
+		return new SphericalCoordinate(x, y);
 	}
 
-	private static void AssertValidityOfSecondOrMinute(int entry) {
-		if (entry < 0 || entry >= 60) {
-			throw new IllegalArgumentException(String.format("argument %s is not allowed as second or minute",
-					new Object[] { Integer.valueOf(entry) }));
+	private static void AssertValidityOfSecondOrMinute(int value) {
+		if (value < 0 || value >= 60) {
+			throw new IllegalArgumentException("Value " + value + " is not a valid second or minute (expected 0–59).");
 		}
 	}
 
 	private static void AssertValidityOfHour(int hour) {
-		if (hour < 0 || hour > 24)
-			throw new IllegalArgumentException(
-					String.format("argument %s is not allowed as hour", new Object[] { Integer.valueOf(hour) }));
+		if (hour < 0 || hour > 24) {
+			throw new IllegalArgumentException("Value " + hour + " is not a valid hour (expected 0–24).");
+		}
 	}
 }

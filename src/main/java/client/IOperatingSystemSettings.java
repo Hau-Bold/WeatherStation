@@ -20,8 +20,6 @@ public interface IOperatingSystemSettings {
 
 	String getPathToDHT22Data();
 
-	String getPathToBMP180Data();
-
 	String getPathToImageForBackground();
 
 	String getNextBackgroundImage();

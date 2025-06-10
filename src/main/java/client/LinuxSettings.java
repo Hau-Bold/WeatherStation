@@ -65,10 +65,6 @@ public class LinuxSettings implements IOperatingSystemSettings {
 		return myDirectory + File.separator + Constants.SensorData + File.separator + Constants.DHT22_DATA;
 	}
 
-	public String getPathToBMP180Data() {
-		return myDirectory + File.separator + Constants.SensorData + File.separator + Constants.BMP180_DATA;
-	}
-
 	public String getNextBackgroundImage() {
 
 		int counter = mySeed.nextInt(myBackgroundImages.size());

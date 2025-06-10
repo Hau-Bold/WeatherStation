@@ -62,84 +62,68 @@ public class DisplayController implements Runnable {
 
 		List<Data> dataOut = null;
 		List<Data> dataIn = null;
-		String colorOut = null;
-		String colorIn = null;
-		String mode = null;
+		DisplayMode displayMode = null;
 
 		switch (myMode) {
 
 		case 0:
 			dataOut = myOpenWeatherMapDatabaseLogic.getDHT22Data(Constants.Temperature_Out);
 			dataIn = myOpenWeatherMapDatabaseLogic.getDHT22Data(Constants.Temperature_In);
-			mode = Constants.Temperature;
+			displayMode = DisplayMode.TEMPERATURE;
 
-			colorOut = Constants.RED;
-			colorIn = Constants.VERY_LIGHT_BLUE;
 			break;
 
 		case 1:
 			dataOut = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MaxTemperature_Out);
 			dataIn = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MaxTemperature_In);
-			mode = Constants.TemperatureMax;
-			colorOut = Constants.RED;
-			colorIn = Constants.VERY_LIGHT_BLUE;
+			displayMode = DisplayMode.TEMPERATURE_MAX;
 			break;
 
 		case 2:
 			dataOut = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MinTemperature_Out);
 			dataIn = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MinTemperature_In);
-			mode = Constants.TemperatureMin;
-			colorOut = Constants.RED;
-			colorIn = Constants.VERY_LIGHT_BLUE;
+			displayMode = DisplayMode.Temperature_Min;
 			break;
 
 		case 3:
 			dataOut = myOpenWeatherMapDatabaseLogic.getDHT22Data(Constants.Humidity_Out);
 			dataIn = myOpenWeatherMapDatabaseLogic.getDHT22Data(Constants.Humidity_In);
-			mode = Constants.Humidity;
-			colorOut = Constants.BLUE;
-			colorIn = Constants.VERY_LIGHT_GREEN;
+			displayMode = DisplayMode.HUMIDITY;
 			break;
 
 		case 4:
 			dataOut = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MaxHumidity_Out);
 			dataIn = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MaxHumidity_In);
-			mode = Constants.HumidityMax;
-			colorOut = Constants.BLUE;
-			colorIn = Constants.VERY_LIGHT_GREEN;
+			displayMode = DisplayMode.HUMIDITY_MAX;
 			break;
 
 		case 5:
 			dataOut = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MinHumidity_Out);
 			dataIn = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MinHumidity_In);
-			mode = Constants.HumidityMin;
-			colorOut = Constants.BLUE;
-			colorIn = Constants.VERY_LIGHT_GREEN;
+			displayMode = DisplayMode.HUMIDITY_MIN;
 			break;
 
 		case 6:
 			dataOut = myOpenWeatherMapDatabaseLogic.getBMP180Data();
-			mode = Constants.Pressure;
-			colorOut = Constants.MEDIUM_SPRING_GREEN;
+			displayMode = DisplayMode.PRESSURE;
 			break;
 
 		case 7:
 			dataOut = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MaxPressure);
-			mode = Constants.PressureMax;
-			colorOut = Constants.MEDIUM_SPRING_GREEN;
+			displayMode = DisplayMode.PRESSURE_MAX;
 			break;
 
 		case 8:
 			dataOut = myOpenWeatherMapDatabaseLogic.getData_MaxMin(Constants.MinPressure);
-			mode = Constants.PressureMin;
-			colorOut = Constants.MEDIUM_SPRING_GREEN;
+			displayMode = DisplayMode.PRESSURE_MIN;
 			break;
 
 		default:
 			throw new NotImplementedException("mode not implemented yet");
 		}
 
-		generateOverview(pathToBackgroundImage, dataOut, dataIn, colorOut, colorIn, mode);
+		generateOverview(pathToBackgroundImage, dataOut, dataIn, displayMode.getColorOut(), displayMode.getColorIn(),
+				displayMode.getModeName());
 
 		myWebDriver.navigate().refresh();
 

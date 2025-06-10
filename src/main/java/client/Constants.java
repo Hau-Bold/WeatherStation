@@ -21,10 +21,6 @@ public class Constants {
 
 	public static final String DIRECTORY_OF_BROWSER_LINUX = "/usr/bin/";
 
-	public static final String WHITE = "#FFFFFF";
-
-	public static final String GRAY = "#F0F0F0";
-
 	public static final String MEDIUM_SPRING_GREEN = "#00FA9A";
 
 	public static final String GREEN = "#00CA84";
@@ -43,7 +39,6 @@ public class Constants {
 
 	public static final String SensorData = "SensorData";
 	public static final String DHT22_DATA = "DHT22Data.txt";
-	public static final String BMP180_DATA = "BMP180Data.txt";
 
 	public static final String DHT22Table = "TemperatureAndHumidity";
 	public static final String Temperature = "Temperature";

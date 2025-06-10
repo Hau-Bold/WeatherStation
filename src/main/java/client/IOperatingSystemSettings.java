@@ -22,5 +22,6 @@ public interface IOperatingSystemSettings {
 
 	String getPathToImageForBackground();
 
+	// TODO: this should point to a repository for the images....
 	String getNextBackgroundImage();
 }
